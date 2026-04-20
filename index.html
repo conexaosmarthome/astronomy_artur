@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz sobre Astronomia</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --space-dark: #04071a;
+    --space-mid: #0b1035;
+    --space-blue: #1a2a6c;
+    --nebula-purple: #5b2f91;
+    --nebula-pink: #c93280;
+    --star-gold: #f4d03f;
+    --comet-cyan: #00e5ff;
+    --planet-orange: #ff7043;
+    --success-green: #00e676;
+    --error-red: #ff5252;
+    --text-main: #e8eaf6;
+    --text-dim: #9fa8da;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--space-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Starfield */
+  #starfield {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle var(--dur, 3s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.4); }
+  }
+
+  /* Shooting star */
+  .shooting-star {
+    position: absolute;
+    width: 2px;
+    height: 80px;
+    background: linear-gradient(to bottom, white, transparent);
+    transform: rotate(-45deg);
+    animation: shoot 4s linear infinite;
+    animation-delay: var(--delay, 0s);
+    opacity: 0;
+  }
+
+  @keyframes shoot {
+    0% { transform: translateX(0) translateY(-100px) rotate(-45deg); opacity: 1; }
+    100% { transform: translateX(400px) translateY(400px) rotate(-45deg); opacity: 0; }
+  }
+
+  /* Layout */
+  #app {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding: 32px 24px 24px;
+    background: linear-gradient(135deg, rgba(27, 42, 108, 0.6), rgba(91, 47, 145, 0.4));
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    border-radius: 24px;
+    backdrop-filter: blur(8px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at center, rgba(0,229,255,0.05) 0%, transparent 60%);
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { transform: scale(0.9); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+
+  .planet-icon {
+    font-size: 52px;
+    display: block;
+    margin-bottom: 12px;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(22px, 5vw, 34px);
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--comet-cyan), var(--star-gold), var(--nebula-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-shadow: none;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--text-dim);
+    font-style: italic;
+    letter-spacing: 0.5px;
+  }
+
+  /* HUD / scoreboard */
+  #hud {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .hud-card {
+    background: rgba(26, 42, 108, 0.5);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .hud-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  .hud-value {
+    font-size: 26px;
+    font-weight: 800;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--comet-cyan);
+  }
+
+  #hud-score .hud-value { color: var(--star-gold); }
+  #hud-lives .hud-value { color: var(--nebula-pink); }
+
+  /* Progress bar */
+  #progress-wrap {
+    background: rgba(255,255,255,0.08);
+    border-radius: 99px;
+    height: 8px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+
+  #progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--comet-cyan), var(--nebula-purple));
+    border-radius: 99px;
+    transition: width 0.5s ease;
+  }
+
+  /* Question card */
+  #question-card {
+    background: linear-gradient(135deg, rgba(11,16,53,0.9), rgba(27,42,108,0.7));
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    border-radius: 20px;
+    padding: 28px 24px 24px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .category-badge {
+    display: inline-block;
+    background: rgba(0, 229, 255, 0.12);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    color: var(--comet-cyan);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif;
+    padding: 4px 12px;
+    border-radius: 99px;
+    margin-bottom: 16px;
+  }
+
+  #question-emoji {
+    font-size: 40px;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  #question-text {
+    font-size: clamp(16px, 3vw, 20px);
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+
+  #fun-fact {
+    display: none;
+    font-size: 14px;
+    color: var(--star-gold);
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(244, 208, 63, 0.08);
+    border-left: 3px solid var(--star-gold);
+    border-radius: 0 10px 10px 0;
+    line-height: 1.6;
+  }
+
+  /* Options */
+  #options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    #options { grid-template-columns: 1fr; }
+  }
+
+  .option-btn {
+    background: rgba(26, 42, 108, 0.5);
+    border: 1.5px solid rgba(0, 229, 255, 0.2);
+    border-radius: 14px;
+    padding: 16px 20px;
+    color: var(--text-main);
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .option-letter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    background: rgba(0, 229, 255, 0.12);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    font-size: 12px;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--comet-cyan);
+  }
+
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--comet-cyan);
+    background: rgba(0, 229, 255, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 229, 255, 0.15);
+  }
+
+  .option-btn.correct {
+    background: rgba(0, 230, 118, 0.15);
+    border-color: var(--success-green);
+    color: var(--success-green);
+  }
+
+  .option-btn.correct .option-letter {
+    background: rgba(0, 230, 118, 0.2);
+    border-color: var(--success-green);
+    color: var(--success-green);
+  }
+
+  .option-btn.wrong {
+    background: rgba(255, 82, 82, 0.15);
+    border-color: var(--error-red);
+    color: var(--error-red);
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .option-btn:disabled { cursor: not-allowed; }
+
+  /* Next button */
+  #next-btn {
+    display: none;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(90deg, var(--nebula-purple), var(--space-blue));
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    border-radius: 14px;
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+  }
+
+  #next-btn:hover {
+    background: linear-gradient(90deg, var(--nebula-pink), var(--nebula-purple));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(91, 47, 145, 0.4);
+  }
+
+  /* Feedback overlay */
+  #feedback {
+    display: none;
+    text-align: center;
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    font-size: 18px;
+    font-weight: 800;
+    animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  #feedback.correct {
+    background: rgba(0, 230, 118, 0.12);
+    border: 1px solid var(--success-green);
+    color: var(--success-green);
+  }
+
+  #feedback.wrong {
+    background: rgba(255, 82, 82, 0.12);
+    border: 1px solid var(--error-red);
+    color: var(--error-red);
+  }
+
+  /* Result screen */
+  #result-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 24px;
+    background: linear-gradient(135deg, rgba(11,16,53,0.95), rgba(91,47,145,0.5));
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    border-radius: 24px;
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #result-emoji { font-size: 72px; display: block; margin-bottom: 16px; animation: float 4s ease-in-out infinite; }
+
+  #result-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(20px, 5vw, 30px);
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--comet-cyan), var(--star-gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  #result-score-big {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(48px, 12vw, 80px);
+    font-weight: 900;
+    color: var(--star-gold);
+    line-height: 1;
+    margin: 16px 0;
+    text-shadow: 0 0 40px rgba(244,208,63,0.5);
+  }
+
+  #result-msg {
+    font-size: 17px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 32px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  #restart-btn {
+    padding: 16px 40px;
+    background: linear-gradient(90deg, var(--comet-cyan), var(--space-blue));
+    border: none;
+    border-radius: 14px;
+    color: var(--space-dark);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+  }
+
+  #restart-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 30px rgba(0, 229, 255, 0.3);
+  }
+
+  .result-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+
+  .r-stat {
+    text-align: center;
+  }
+
+  .r-stat-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--comet-cyan);
+  }
+
+  .r-stat-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* Medals */
+  #medals { margin: 16px 0; font-size: 32px; letter-spacing: 4px; }
+
+  /* Question number */
+  #question-number {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  /* Streak */
+  #streak-badge {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--star-gold);
+    background: rgba(4,7,26,0.9);
+    border: 2px solid var(--star-gold);
+    border-radius: 16px;
+    padding: 16px 28px;
+    z-index: 100;
+    text-align: center;
+    pointer-events: none;
+    animation: streakPop 0s;
+  }
+
+  @keyframes streakPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: confetti-fall 3s ease-in forwards;
+    z-index: 200;
+  }
+
+  @keyframes confetti-fall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<div id="streak-badge"></div>
+
+<div id="app">
+  <header>
+    <span class="planet-icon">🚀</span>
+    <h1>Quiz sobre Astronomia</h1>
+    <p class="subtitle">✨ Idealizado por Artur Valentini ✨</p>
+  </header>
+
+  <div id="hud">
+    <div class="hud-card" id="hud-score">
+      <div class="hud-label">⭐ Pontos</div>
+      <div class="hud-value" id="score-display">0</div>
+    </div>
+    <div class="hud-card" id="hud-question">
+      <div class="hud-label">📡 Questão</div>
+      <div class="hud-value" id="q-display">1</div>
+    </div>
+    <div class="hud-card" id="hud-lives">
+      <div class="hud-label">❤️ Vidas</div>
+      <div class="hud-value" id="lives-display">3</div>
+    </div>
+  </div>
+
+  <div id="progress-wrap">
+    <div id="progress-bar" style="width: 0%"></div>
+  </div>
+
+  <div id="question-card">
+    <div class="category-badge" id="category-badge">Astronomia</div>
+    <span id="question-emoji">🌍</span>
+    <p id="question-number">Pergunta 1 de 20</p>
+    <p id="question-text">Carregando...</p>
+    <div id="fun-fact"></div>
+  </div>
+
+  <div id="feedback"></div>
+
+  <div id="options">
+    <button class="option-btn" data-idx="0"><span class="option-letter">A</span><span class="option-text"></span></button>
+    <button class="option-btn" data-idx="1"><span class="option-letter">B</span><span class="option-text"></span></button>
+    <button class="option-btn" data-idx="2"><span class="option-letter">C</span><span class="option-text"></span></button>
+    <button class="option-btn" data-idx="3"><span class="option-letter">D</span><span class="option-text"></span></button>
+  </div>
+
+  <button id="next-btn">PRÓXIMA PERGUNTA →</button>
+
+  <div id="result-screen">
+    <span id="result-emoji">🏆</span>
+    <h2 id="result-title">Missão Completa!</h2>
+    <div id="medals"></div>
+    <div id="result-score-big">0</div>
+    <div class="result-stats">
+      <div class="r-stat">
+        <div class="r-stat-val" id="r-correct">0</div>
+        <div class="r-stat-label">Acertos</div>
+      </div>
+      <div class="r-stat">
+        <div class="r-stat-val" id="r-wrong">0</div>
+        <div class="r-stat-label">Erros</div>
+      </div>
+      <div class="r-stat">
+        <div class="r-stat-val" id="r-pct">0%</div>
+        <div class="r-stat-label">Aproveitamento</div>
+      </div>
+    </div>
+    <p id="result-msg"></p>
+    <button id="restart-btn">🚀 JOGAR NOVAMENTE</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    category: "Planetas",
+    emoji: "🪐",
+    text: "Qual é o maior planeta do Sistema Solar?",
+    options: ["Saturno", "Júpiter", "Netuno", "Urano"],
+    answer: 1,
+    fact: "Júpiter é tão enorme que todos os outros planetas do Sistema Solar caberiam dentro dele! Ele tem uma tempestade chamada Grande Mancha Vermelha que dura há mais de 350 anos."
+  },
+  {
+    category: "Planetas",
+    emoji: "🔴",
+    text: "Qual planeta é chamado de 'Planeta Vermelho'?",
+    options: ["Vênus", "Mercúrio", "Marte", "Plutão"],
+    answer: 2,
+    fact: "Marte tem sua cor avermelhada por causa do óxido de ferro (ferrugem) em sua superfície. Lá também fica o maior vulcão do Sistema Solar: o Monte Olimpo!"
+  },
+  {
+    category: "Estrelas",
+    emoji: "☀️",
+    text: "Como se chama a nossa estrela, o centro do Sistema Solar?",
+    options: ["Sírius", "Sol", "Polar", "Betelgeuse"],
+    answer: 1,
+    fact: "O Sol tem cerca de 4,6 bilhões de anos e ainda vai brilhar por mais 5 bilhões de anos! Ele é tão grande que cabem mais de 1 milhão de Terras dentro dele."
+  },
+  {
+    category: "Satélites",
+    emoji: "🌕",
+    text: "Qual é o maior satélite natural da Terra?",
+    options: ["Io", "Titã", "Europa", "Lua"],
+    answer: 3,
+    fact: "A Lua se afasta da Terra cerca de 3,8 centímetros por ano. Ela leva exatamente o mesmo tempo para girar em torno de si mesma e em torno da Terra, por isso sempre vemos a mesma face!"
+  },
+  {
+    category: "Galáxias",
+    emoji: "🌌",
+    text: "Como se chama a galáxia onde fica o nosso Sistema Solar?",
+    options: ["Andrômeda", "Via Láctea", "Triângulo", "Whirlpool"],
+    answer: 1,
+    fact: "A Via Láctea tem entre 200 e 400 bilhões de estrelas! Ela colide lentamente com a galáxia de Andrômeda, mas não vai colidir de verdade por cerca de 4,5 bilhões de anos."
+  },
+  {
+    category: "Planetas",
+    emoji: "💍",
+    text: "Qual planeta famoso possui belos anéis ao seu redor?",
+    options: ["Júpiter", "Marte", "Saturno", "Netuno"],
+    answer: 2,
+    fact: "Os anéis de Saturno são feitos principalmente de gelo e rocha. Eles têm mais de 280.000 km de largura, mas apenas cerca de 1 km de espessura! Saturno também tem 146 luas conhecidas."
+  },
+  {
+    category: "Astronomia Geral",
+    emoji: "🌠",
+    text: "O que são estrelas cadentes, na verdade?",
+    options: ["Estrelas pequenas caindo", "Fragmentos de cometas queimando na atmosfera", "Pedaços da Lua", "Planetas em movimento"],
+    answer: 1,
+    fact: "As 'estrelas cadentes' são meteoros: pequenos fragmentos de rocha ou metal que entram na atmosfera terrestre e queimam por causa do atrito com o ar. Se não se queimam todo e caem na Terra, chamamos de meteoritos."
+  },
+  {
+    category: "Sistema Solar",
+    emoji: "☄️",
+    text: "Qual é o planeta mais próximo do Sol?",
+    options: ["Vênus", "Terra", "Mercúrio", "Marte"],
+    answer: 2,
+    fact: "Mercúrio é tão próximo do Sol que um dia em Mercúrio (sunrise ao próximo sunrise) dura 176 dias terrestres! Apesar de ser o mais próximo, Vênus é o planeta mais quente por causa de sua atmosfera densa."
+  },
+  {
+    category: "Espaço Profundo",
+    emoji: "⚫",
+    text: "O que é um buraco negro?",
+    options: ["Um planeta muito escuro", "Uma região onde a gravidade é tão forte que nem a luz escapa", "Uma estrela apagada", "Um buraco no espaço"],
+    answer: 1,
+    fact: "No centro da Via Láctea existe um buraco negro supermassivo chamado Sagitário A*, que tem a massa equivalente a 4 milhões de sóis! Em 2019, capturamos a primeira foto de um buraco negro."
+  },
+  {
+    category: "Planetas",
+    emoji: "🔵",
+    text: "Qual planeta tem a maior tempestade já observada no Sistema Solar?",
+    options: ["Saturno", "Netuno", "Júpiter", "Urano"],
+    answer: 2,
+    fact: "A Grande Mancha Vermelha de Júpiter é uma tempestade que existe há pelo menos 350 anos! É tão grande que caberia duas Terras dentro dela. Mas ela está encolhendo lentamente nos últimos anos."
+  },
+  {
+    category: "Astronomia Geral",
+    emoji: "🌟",
+    text: "Quantos anos-luz de distância fica a estrela mais próxima do Sol?",
+    options: ["0,1 ano-luz", "4,2 anos-luz", "10 anos-luz", "100 anos-luz"],
+    answer: 1,
+    fact: "Próxima Centauri fica a 4,2 anos-luz do Sol. Um ano-luz é a distância que a luz percorre em um ano: quase 9,5 trilhões de km! Com os foguetes atuais, levaríamos mais de 70.000 anos para chegar lá."
+  },
+  {
+    category: "Satélites",
+    emoji: "🧊",
+    text: "Qual lua de Júpiter pode ter um oceano de água líquida sob sua superfície gelada?",
+    options: ["Io", "Calisto", "Europa", "Ganimedes"],
+    answer: 2,
+    fact: "Europa tem uma camada de gelo com cerca de 10 km de espessura, mas abaixo pode existir um oceano de 100 km de profundidade! Cientistas acreditam que pode haver vida lá. A NASA tem uma missão chamada Europa Clipper explorando isso."
+  },
+  {
+    category: "Histórico Espacial",
+    emoji: "👨‍🚀",
+    text: "Quem foi o primeiro ser humano a pisar na Lua?",
+    options: ["Yuri Gagarin", "Buzz Aldrin", "Michael Collins", "Neil Armstrong"],
+    answer: 3,
+    fact: "Neil Armstrong pisou na Lua em 20 de julho de 1969 pela missão Apollo 11. Sua famosa frase foi: 'Um pequeno passo para o homem, um salto gigantesco para a humanidade.' Buzz Aldrin foi o segundo. Michael Collins ficou orbitando na nave."
+  },
+  {
+    category: "Planetas",
+    emoji: "🌀",
+    text: "Qual é o planeta que gira 'de lado' no Sistema Solar?",
+    options: ["Netuno", "Urano", "Saturno", "Plutão"],
+    answer: 1,
+    fact: "Urano tem uma inclinação axial de 98 graus, o que significa que ele basicamente rola ao redor do Sol como uma bola! Isso provavelmente aconteceu por causa de uma colisão enorme bilhões de anos atrás."
+  },
+  {
+    category: "Astronomia Geral",
+    emoji: "💥",
+    text: "Como os cientistas chamam a teoria da origem do Universo?",
+    options: ["Grande Implosão", "Big Bang", "Explosão Cósmica", "Supernova Inicial"],
+    answer: 1,
+    fact: "O Big Bang aconteceu há cerca de 13,8 bilhões de anos. Naquele momento, todo o Universo estava comprimido num ponto minúsculo, menor que um átomo! O Universo ainda está se expandindo e acelerando até hoje."
+  },
+  {
+    category: "Estrelas",
+    emoji: "💫",
+    text: "O que acontece quando uma estrela muito massiva explode no fim de sua vida?",
+    options: ["Buraco branco", "Supernova", "Nebulosa solar", "Cometa gigante"],
+    answer: 1,
+    fact: "Uma supernova pode brilhar tanto quanto uma galáxia inteira por alguns dias! Os elementos que formam nosso corpo, como ferro e cálcio, foram criados em explosões de supernova. Somos literalmente feitos de poeira de estrelas!"
+  },
+  {
+    category: "Sistema Solar",
+    emoji: "🌊",
+    text: "Qual é o único planeta conhecido com vida confirmada?",
+    options: ["Marte", "Europa (lua)", "Terra", "Vênus"],
+    answer: 2,
+    fact: "A Terra é única porque tem água líquida na superfície, uma atmosfera protetora, temperatura adequada e um campo magnético que nos protege das radiações do Sol. Mas os cientistas continuam buscando sinais de vida em outros planetas!"
+  },
+  {
+    category: "Satélites",
+    emoji: "🟡",
+    text: "Qual lua tem chuva de metano líquido e lagos de hidrocarbonetos?",
+    options: ["Titã (Saturno)", "Europa (Júpiter)", "Io (Júpiter)", "Tritão (Netuno)"],
+    answer: 0,
+    fact: "Titã, lua de Saturno, tem rios e lagos de metano e etano líquidos! Sua atmosfera é mais espessa que a da Terra. É um dos lugares mais estranhos e fascinantes do Sistema Solar."
+  },
+  {
+    category: "Espaço Profundo",
+    emoji: "🔭",
+    text: "Qual famoso telescópio espacial foi lançado em 2021 para observar o Universo primitivo?",
+    options: ["Hubble", "Spitzer", "James Webb", "Kepler"],
+    answer: 2,
+    fact: "O Telescópio Espacial James Webb é tão poderoso que consegue ver galáxias formadas apenas 300 milhões de anos após o Big Bang. Suas imagens revelaram estruturas do Universo com um nível de detalhe nunca antes visto!"
+  },
+  {
+    category: "Astronomia Geral",
+    emoji: "🌍",
+    text: "Quantos planetas existem no nosso Sistema Solar (definição atual)?",
+    options: ["7", "9", "8", "10"],
+    answer: 2,
+    fact: "Em 2006, Plutão foi reclassificado como 'planeta anão', deixando o Sistema Solar com 8 planetas: Mercúrio, Vênus, Terra, Marte, Júpiter, Saturno, Urano e Netuno. Mas alguns cientistas acreditam que pode existir um 9º planeta escondido bem longe do Sol!"
+  }
+];
+
+// ─── State ───────────────────────────────────────────
+let questions = [];
+let current = 0;
+let score = 0;
+let lives = 3;
+let correctCount = 0;
+let wrongCount = 0;
+let streak = 0;
+let answered = false;
+
+// ─── DOM refs ─────────────────────────────────────────
+const scoreEl = document.getElementById('score-display');
+const qEl = document.getElementById('q-display');
+const livesEl = document.getElementById('lives-display');
+const progressBar = document.getElementById('progress-bar');
+const questionCard = document.getElementById('question-card');
+const categoryBadge = document.getElementById('category-badge');
+const questionEmoji = document.getElementById('question-emoji');
+const questionNumber = document.getElementById('question-number');
+const questionText = document.getElementById('question-text');
+const funFact = document.getElementById('fun-fact');
+const optionBtns = document.querySelectorAll('.option-btn');
+const feedback = document.getElementById('feedback');
+const nextBtn = document.getElementById('next-btn');
+const resultScreen = document.getElementById('result-screen');
+const hud = document.getElementById('hud');
+const progressWrap = document.getElementById('progress-wrap');
+const streakBadge = document.getElementById('streak-badge');
+
+// ─── Starfield ────────────────────────────────────────
+function buildStars() {
+  const sf = document.getElementById('starfield');
+  for (let i = 0; i < 160; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--delay:${Math.random()*4}s`;
+    sf.appendChild(s);
+  }
+  for (let i = 0; i < 5; i++) {
+    const ss = document.createElement('div');
+    ss.className = 'shooting-star';
+    ss.style.cssText = `left:${Math.random()*60}%;top:${Math.random()*40}%;--delay:${i*2+Math.random()*3}s`;
+    sf.appendChild(ss);
+  }
+}
+
+// ─── Shuffle ──────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ─── Init ─────────────────────────────────────────────
+function init() {
+  questions = shuffle(QUESTIONS);
+  current = 0;
+  score = 0;
+  lives = 3;
+  correctCount = 0;
+  wrongCount = 0;
+  streak = 0;
+  resultScreen.style.display = 'none';
+  hud.style.display = 'grid';
+  progressWrap.style.display = 'block';
+  questionCard.style.display = 'block';
+  document.getElementById('options').style.display = 'grid';
+  updateHUD();
+  loadQuestion();
+}
+
+// ─── HUD ──────────────────────────────────────────────
+function updateHUD() {
+  scoreEl.textContent = score;
+  qEl.textContent = current + 1;
+  livesEl.textContent = '❤️'.repeat(lives) || '💀';
+  progressBar.style.width = (current / questions.length * 100) + '%';
+}
+
+// ─── Load question ────────────────────────────────────
+function loadQuestion() {
+  answered = false;
+  feedback.style.display = 'none';
+  funFact.style.display = 'none';
+  nextBtn.style.display = 'none';
+  feedback.className = 'feedback';
+
+  const q = questions[current];
+  categoryBadge.textContent = q.category;
+  questionEmoji.textContent = q.emoji;
+  questionNumber.textContent = `Pergunta ${current + 1} de ${questions.length}`;
+  questionText.textContent = q.text;
+
+  const letters = ['A', 'B', 'C', 'D'];
+  optionBtns.forEach((btn, i) => {
+    btn.className = 'option-btn';
+    btn.disabled = false;
+    btn.querySelector('.option-letter').textContent = letters[i];
+    btn.querySelector('.option-text').textContent = q.options[i];
+  });
+
+  // Animate card in
+  questionCard.style.opacity = '0';
+  questionCard.style.transform = 'translateY(16px)';
+  requestAnimationFrame(() => {
+    questionCard.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+    questionCard.style.opacity = '1';
+    questionCard.style.transform = 'translateY(0)';
+  });
+}
+
+// ─── Answer ───────────────────────────────────────────
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[current];
+  const isCorrect = idx === q.answer;
+
+  optionBtns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add('correct');
+    else if (i === idx && !isCorrect) btn.classList.add('wrong');
+  });
+
+  feedback.style.display = 'block';
+
+  if (isCorrect) {
+    streak++;
+    correctCount++;
+    const bonus = streak >= 3 ? 20 : 10;
+    score += bonus;
+    feedback.className = 'correct';
+    feedback.textContent = streak >= 3
+      ? `🔥 ${streak}x SEQUÊNCIA! +${bonus} pontos!`
+      : `✅ Incrível! Você acertou! +${bonus} pontos`;
+    if (streak === 3 || streak === 5 || streak === 10) showStreak();
+    spawnConfetti(8);
+  } else {
+    streak = 0;
+    wrongCount++;
+    lives--;
+    feedback.className = 'wrong';
+    feedback.textContent = '❌ Ops! Resposta errada... Mas você vai aprender!';
+    livesEl.textContent = lives > 0 ? '❤️'.repeat(lives) : '💀';
+  }
+
+  funFact.style.display = 'block';
+  funFact.textContent = '💡 Curiosidade: ' + q.fact;
+
+  scoreEl.textContent = score;
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = current + 1 >= questions.length || lives <= 0
+    ? '🏆 VER RESULTADO'
+    : 'PRÓXIMA PERGUNTA →';
+}
+
+// ─── Next ─────────────────────────────────────────────
+function nextQuestion() {
+  if (lives <= 0) { showResult(); return; }
+  current++;
+  if (current >= questions.length) { showResult(); return; }
+  updateHUD();
+  loadQuestion();
+}
+
+// ─── Result ───────────────────────────────────────────
+function showResult() {
+  questionCard.style.display = 'none';
+  document.getElementById('options').style.display = 'none';
+  feedback.style.display = 'none';
+  nextBtn.style.display = 'none';
+  hud.style.display = 'none';
+  progressWrap.style.display = 'none';
+  resultScreen.style.display = 'block';
+
+  const pct = Math.round(correctCount / questions.length * 100);
+  document.getElementById('result-score-big').textContent = score;
+  document.getElementById('r-correct').textContent = correctCount;
+  document.getElementById('r-wrong').textContent = wrongCount;
+  document.getElementById('r-pct').textContent = pct + '%';
+
+  let emoji, title, msg, medals;
+  if (pct >= 90) {
+    emoji = '🏆'; title = 'Gênio Espacial!'; medals = '🥇🌟🚀';
+    msg = 'Uau! Você é um verdadeiro astrônomo! Seu conhecimento do universo é fenomenal. O cosmos seria sortudo de ter você como explorador!';
+  } else if (pct >= 70) {
+    emoji = '🚀'; title = 'Explorador Estelar!'; medals = '🥈⭐🌙';
+    msg = 'Muito bem! Você tem um ótimo conhecimento sobre astronomia. Continue explorando o universo e logo chegará às estrelas!';
+  } else if (pct >= 50) {
+    emoji = '🌙'; title = 'Astronauta em Treinamento!'; medals = '🥉🌠';
+    msg = 'Bom começo! Você ainda está aprendendo a navegar pelo cosmos. Continue estudando e em breve vai dominar os segredos do universo!';
+  } else {
+    emoji = '🌍'; title = 'Missão: Aprender Mais!'; medals = '🌍📚';
+    msg = 'Não desanime! Todo astrônomo começa aqui na Terra. Leia mais sobre o espaço e tente novamente — o universo te espera!';
+  }
+
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('medals').textContent = medals;
+  document.getElementById('result-msg').textContent = msg;
+
+  if (pct >= 70) spawnConfetti(30);
+}
+
+// ─── Streak badge ─────────────────────────────────────
+function showStreak() {
+  const msgs = { 3: '🔥 TRIO PERFEITO!', 5: '⚡ CINCO SEGUIDOS!', 10: '💥 DEZ EM SEQUÊNCIA!' };
+  streakBadge.textContent = msgs[streak] || `🔥 ${streak}x SEQUÊNCIA!`;
+  streakBadge.style.display = 'block';
+  streakBadge.style.animation = 'none';
+  void streakBadge.offsetWidth;
+  streakBadge.style.animation = 'streakPop 1.5s ease forwards';
+  setTimeout(() => { streakBadge.style.display = 'none'; }, 1500);
+}
+
+// ─── Confetti ─────────────────────────────────────────
+function spawnConfetti(n) {
+  const colors = ['#f4d03f', '#00e5ff', '#ff7043', '#00e676', '#c93280', '#5b2f91'];
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.cssText = `left:${10+Math.random()*80}%;top:0;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*0.6}s;animation-duration:${2+Math.random()*1.5}s;transform:rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+// ─── Events ───────────────────────────────────────────
+optionBtns.forEach(btn => {
+  btn.addEventListener('click', () => selectAnswer(+btn.dataset.idx));
+});
+nextBtn.addEventListener('click', nextQuestion);
+document.getElementById('restart-btn').addEventListener('click', init);
+
+// ─── Start ────────────────────────────────────────────
+buildStars();
+init();
+</script>
+</body>
+</html>
