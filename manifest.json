@@ -1,6 +1,6 @@
 {
   "name": "Quiz de Astronomia",
-  "short_name": "Quiz Astro",
+  "short_name": "Quiz Astro-V3",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#04071a",
