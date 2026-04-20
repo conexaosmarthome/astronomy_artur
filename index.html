@@ -759,6 +759,87 @@ const QUESTIONS = [
     answer: 2,
     fact: "Em 2006, Plutão foi reclassificado como 'planeta anão', deixando o Sistema Solar com 8 planetas: Mercúrio, Vênus, Terra, Marte, Júpiter, Saturno, Urano e Netuno. Mas alguns cientistas acreditam que pode existir um 9º planeta escondido bem longe do Sol!"
   }
+,
+{
+  category: "Planetas",
+  emoji: "🌋",
+  text: "Qual planeta possui o maior vulcão do Sistema Solar?",
+  options: ["Terra", "Marte", "Vênus", "Júpiter"],
+  answer: 1,
+  fact: "O Monte Olimpo em Marte tem cerca de 22 km de altura — quase 3 vezes o Monte Everest!"
+},
+{
+  category: "Sistema Solar",
+  emoji: "🔥",
+  text: "Qual é o planeta mais quente do Sistema Solar?",
+  options: ["Mercúrio", "Vênus", "Marte", "Júpiter"],
+  answer: 1,
+  fact: "Mesmo não sendo o mais próximo do Sol, Vênus é o mais quente por causa do efeito estufa extremo."
+},
+{
+  category: "Espaço",
+  emoji: "🧭",
+  text: "O que usamos para medir distâncias no espaço?",
+  options: ["Quilômetros", "Metros", "Ano-luz", "Milhas"],
+  answer: 2,
+  fact: "Um ano-luz equivale a cerca de 9,46 trilhões de quilômetros."
+},
+{
+  category: "Estrelas",
+  emoji: "⭐",
+  text: "Qual é a estrela mais brilhante do céu noturno?",
+  options: ["Polaris", "Sírius", "Vega", "Rigel"],
+  answer: 1,
+  fact: "Sírius é duas vezes mais massiva que o Sol e muito mais luminosa."
+},
+{
+  category: "Galáxias",
+  emoji: "🌌",
+  text: "Qual é a galáxia mais próxima da Via Láctea?",
+  options: ["Triângulo", "Andrômeda", "Sombrero", "Cartwheel"],
+  answer: 1,
+  fact: "A galáxia de Andrômeda está a cerca de 2,5 milhões de anos-luz de distância."
+},
+{
+  category: "Espaço",
+  emoji: "🛰️",
+  text: "Qual foi o primeiro satélite artificial lançado ao espaço?",
+  options: ["Apollo 11", "Sputnik 1", "Voyager 1", "Hubble"],
+  answer: 1,
+  fact: "O Sputnik 1 foi lançado pela União Soviética em 1957."
+},
+{
+  category: "Astronomia Geral",
+  emoji: "🌠",
+  text: "Como se chama o fenômeno de várias estrelas cadentes?",
+  options: ["Supernova", "Chuva de meteoros", "Eclipse", "Aurora"],
+  answer: 1,
+  fact: "Chuvas de meteoros acontecem quando a Terra atravessa trilhas de detritos de cometas."
+},
+{
+  category: "Planetas",
+  emoji: "💨",
+  text: "Qual planeta tem ventos mais rápidos do Sistema Solar?",
+  options: ["Terra", "Saturno", "Netuno", "Urano"],
+  answer: 2,
+  fact: "Netuno possui ventos que ultrapassam 2.000 km/h!"
+},
+{
+  category: "Espaço Profundo",
+  emoji: "⚡",
+  text: "O que acontece se você cair em um buraco negro?",
+  options: ["Congela", "Evapora", "É esmagado", "Nada acontece"],
+  answer: 2,
+  fact: "A força gravitacional esticaria você em um processo chamado 'espaguetificação'."
+},
+{
+  category: "Satélites",
+  emoji: "🌕",
+  text: "Qual lua é a maior do Sistema Solar?",
+  options: ["Lua", "Titã", "Ganimedes", "Europa"],
+  answer: 2,
+  fact: "Ganimedes é maior até que o planeta Mercúrio."
+}
 ];
 
 // ─── State ───────────────────────────────────────────
@@ -820,7 +901,7 @@ function shuffle(arr) {
 
 // ─── Init ─────────────────────────────────────────────
 function init() {
-  questions = shuffle(QUESTIONS);
+  questions = shuffle(QUESTIONS).slice(0, 20);
   current = 0;
   score = 0;
   lives = 3;
